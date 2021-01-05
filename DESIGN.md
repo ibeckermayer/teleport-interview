@@ -14,7 +14,15 @@ Note: My plan is to initially implement the system with client-side polling (the
 
 ## Browser-client Security
 
-Browser-clients will use a username/password to authenticate and then be granted an access token which will serve as a session ID and used to authorize subsequent requests (sent in the Authorization header in Bearer Token format). The server will be built to only accept SSL encrypted connections which will prevent (all but the most sophisticated) MITM attackers from stealing the token from the header and/or other information sent over the wire.
+Browser-clients will use a username/password to authenticate and then be granted an access token which will serve as a session ID and used to authorize subsequent requests (sent in the Authorization header in Bearer Token format). The server will be built to only accept SSL encrypted connections which will prevent (all but the most sophisticated) MITM attackers from stealing the token from the header and/or other information sent over the wire. The server will also respond to all requests with the following headers (in addition to `gorilla/mux` defaults):
+
+```
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: deny
+Strict-Transport-Security: max-age= 6307200; includeSubDomains
+Content-Security-Policy: default-src 'self'
+X-Permitted-Cross-Domain-Policies: none
+```
 
 #### Access Token Design
 
@@ -24,7 +32,7 @@ Access/session-id tokens will be [32 bytes](https://cheatsheetseries.owasp.org/c
 
 Server side, sessions will be stored in a global in-memory map indexed by session-id. They will have 12 hour absolute timeout (the user has to log in at least once every 12 hours) to prevent an attacker who manages to compromise a token from causing damage indefinitely. This UX could be improved by implementing a refresh token system however I will consider that out of scope for this project. Sessions will keep track of when they are created, and each access token protected call will use that value to check if sessions have timed out. On timeout (or if the user logs out), the session key and all of its data will be deleted. This global in-memory map should be seen as a temporary solution for prototyping, as it introduces the potential for data races if concurrently processing requests are accessing/modifying the same values in the same session. Additionally, if a user fails to log out and/or clears their browser cache (see discussion of `localStorage` below), a session might wind up "stuck" in memory and never deleted, which is a marginal security/engineering concern. Ultimately I'm imagining this system would be swapped out in favor of a more sophisticated out of the box solution like a Redis store, or a memory safe, self-cleaning implementation like [scs](https://github.com/alexedwards/scs), but will again consider that out of scope unless directed otherwise.
 
-Browser side, access/session-id tokens will be stored in `localStorage` and thus will be saved across browser sessions; this makes them relatively less secure than if they were stored in `sessionStorage`, but in general is a better UX. Using `localStorage` does increase the attack surface for XSS attacks in general, however so long as one is conservative with passing user created content into JSX and doesn't do anything too out of the ordinary, we can [lean on React](https://www.netsparker.com/blog/web-security/cross-site-scripting-react-web-applications/) to provide XSS protection.
+Browser side, access/session-id tokens will be stored in `localStorage` and thus will be saved across browser sessions; this makes them relatively less secure than if they were stored in `sessionStorage`, but in general is a better UX.
 
 #### CSRF protection
 
