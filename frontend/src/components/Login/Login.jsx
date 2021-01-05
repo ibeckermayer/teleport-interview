@@ -5,7 +5,7 @@ const Login = () => {
   const history = useHistory();
 
   const tryLogin = async e => {
-    // Form validation handled by html5 <form>
+    // Form validation handled by html5 <form> validation
     e.preventDefault();
     const res = await fetch('api/login', {
       method: 'POST',
@@ -21,6 +21,7 @@ const Login = () => {
     if (res.ok) {
       history.push('/dashboard');
     }
+    // TODO: check for Unauthorized and alert user that username/pwd is incorrect
   };
 
   return (
