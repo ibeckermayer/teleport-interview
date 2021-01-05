@@ -5,7 +5,7 @@ const Login = () => {
   const history = useHistory();
 
   const tryLogin = async e => {
-    // Form validation handled by html5 <form> validation
+    // Form validation is handled by html5
     e.preventDefault();
     const res = await fetch('api/login', {
       method: 'POST',

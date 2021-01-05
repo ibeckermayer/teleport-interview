@@ -31,7 +31,7 @@ and run them by running
 docker compose up -f docker-compose-dev.yml
 ```
 
-This will start a hot-reload webpack development server serving the React app running on port 8080 and a hot-reload go server running on port 8000.
+This will start a hot-reload webpack development server serving the React app running on port 8080 and a hot-reload go server running on port 8000. Access the app in the browser by navigating to [https://0.0.0.0:8080/](https://0.0.0.0:8080/).
 
 ## Production
 
@@ -47,4 +47,4 @@ and run it by running
 docker compose up -f docker-compose-prod.yml
 ```
 
-This will start a go server exposed over port 8000 serving the React app and go api.
+This will start a go server exposed over port 8000 serving the React app and go api. Access the app in the browser by navigating to [https://localhost:8000/](https://localhost:8000/).
