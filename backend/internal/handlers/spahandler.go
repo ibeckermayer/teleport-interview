@@ -3,6 +3,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,7 +33,8 @@ func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// if we failed to get the absolute path respond with a 400 bad request
 		// and stop
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err.Error())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
@@ -48,7 +50,8 @@ func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		// if we got an error (that wasn't that the file doesn't exist) stating the
 		// file, return a 500 internal server error and stop
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err.Error())
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 

@@ -21,7 +21,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var mr *malformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.msg, mr.status)
+			log.Println(mr.Error())
+			http.Error(w, http.StatusText(mr.status), mr.status)
 		} else {
 			log.Println(err.Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
