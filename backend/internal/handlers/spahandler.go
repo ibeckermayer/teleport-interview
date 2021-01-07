@@ -19,15 +19,15 @@ type SpaHandler struct {
 }
 
 // NewSpaHandler creates and returns a SpaHandler
-func NewSpaHandler(staticPath, indexPath string) SpaHandler {
-	return SpaHandler{staticPath: staticPath, indexPath: indexPath}
+func NewSpaHandler(staticPath, indexPath string) *SpaHandler {
+	return &SpaHandler{staticPath: staticPath, indexPath: indexPath}
 }
 
 // ServeHTTP inspects the URL path to locate a file within the static dir
 // on the SPA handler. If a file is found, it will be served. If not, the
 // file located at the index path on the SPA handler will be served. This
 // is suitable behavior for serving an SPA (single page application).
-func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// get the absolute path to prevent directory traversal
 	path, err := filepath.Abs(r.URL.Path)
 	if err != nil {

@@ -1,39 +1,50 @@
 package handlers
 
 import (
-	"errors"
-	"log"
+	"encoding/json"
 	"net/http"
 )
+
+// LoginHandler handles calls to "/api/login". Implements http.Handler
+type LoginHandler struct {
+	// TODO: Pass db/session manager pointers through from server.Server
+}
+
+// NewLoginHandler creates a new LoginHandler
+func NewLoginHandler() *LoginHandler {
+	return &LoginHandler{}
+}
 
 type loginRequestBody struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-var v http.HandlerFunc
+type loginResponseBody struct {
+	Msg string `json:"msg"`
+}
 
-// Login handles user logging in
-func Login(w http.ResponseWriter, r *http.Request) {
+// Just for testing purposes, TODO: should be deleted
+func fakeAuthLogic(body *loginRequestBody, w http.ResponseWriter, r *http.Request) {
+	if body.Email == "admin@goteleport.com" && body.Password == "admin@goteleport.com" {
+		lrb := loginResponseBody{"Sign in succeeded"}
+		json.NewEncoder(w).Encode(lrb)
+	} else {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	}
+}
+
+// Handles user login
+func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body loginRequestBody
 
 	err := decodeJSONBody(w, r, &body)
 	if err != nil {
-		var mr *malformedRequest
-		if errors.As(err, &mr) {
-			log.Println(mr.Error())
-			http.Error(w, http.StatusText(mr.status), mr.status)
-		} else {
-			log.Println(err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		handleJSONdecodeError(w, err)
 		return
 	}
 
-	// TODO: pwd should be saved in db and bcrypt-ified
-	if body.Email == "admin@goteleport.com" && body.Password == "admin@goteleport.com" {
-		w.Write([]byte("Sign in succeeded"))
-	} else {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	}
+	// TODO: remove
+	fakeAuthLogic(&body, w, r)
+	return
 }
