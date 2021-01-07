@@ -1,5 +1,6 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
+import api from '../../api';
 
 const Login = () => {
   const history = useHistory();
@@ -7,21 +8,17 @@ const Login = () => {
   const tryLogin = async e => {
     // Form validation is handled by html5
     e.preventDefault();
-    const res = await fetch('api/login', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    try {
+      await api.post('/login', {
         email: e.target.email.value,
         password: e.target.password.value,
-      }),
-    });
-    if (res.ok) {
+      });
       history.push('/dashboard');
+    } catch (error) {
+      // TODO: check for Unauthorized and alert user that username/pwd is incorrect, remove console error
+      // eslint-disable-next-line no-console
+      console.error(error);
     }
-    // TODO: check for Unauthorized and alert user that username/pwd is incorrect
   };
 
   return (
