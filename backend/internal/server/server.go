@@ -44,7 +44,7 @@ func New(cfg Config) *Server {
 }
 
 // Run starts the server
-func (srv *Server) Run() {
-	log.Println(fmt.Sprintf("Server listening on port %v", srv.cfg.port))
-	log.Fatal(http.ListenAndServeTLS(fmt.Sprintf(":%v", srv.cfg.port), srv.cfg.certFilePath, srv.cfg.keyFilePath, srv.router))
+func (srv *Server) Run() error {
+	log.Printf("Server listening on port %v", srv.cfg.port)
+	return http.ListenAndServeTLS(fmt.Sprintf(":%v", srv.cfg.port), srv.cfg.certFilePath, srv.cfg.keyFilePath, srv.router)
 }
