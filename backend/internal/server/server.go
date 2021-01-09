@@ -4,35 +4,38 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/handlers"
 )
 
 // Config is the top level config object.
 type Config struct {
-	port         int    // -port; default 8000
-	certFilePath string // -cert; default "../certs/localhost.crt"
-	keyFilePath  string // -key ; default "../certs/localhost.key"
+	port           int           // -port; default 8000
+	certFilePath   string        // -cert; default "../certs/localhost.crt"
+	keyFilePath    string        // -key ; default "../certs/localhost.key"
+	sessionTimeout time.Duration // -sesh; default 12h
 }
 
 // NewConfig creates a new server.Config
-func NewConfig(port int, certFilePath string, keyFilePath string) Config {
-	return Config{port, certFilePath, keyFilePath}
+func NewConfig(port int, certFilePath string, keyFilePath string, sessionTimeout time.Duration) Config {
+	return Config{port, certFilePath, keyFilePath, sessionTimeout}
 }
 
 // Server object initializes route handlers and external connections, and serves application
 type Server struct {
 	cfg    Config
 	router *mux.Router
-	// TODO: database and session manager connections will go here
+	sm     *auth.SessionManager
 }
 
 // New initializes routes and handlers and returns a ready-to-run server
 func New(cfg Config) *Server {
-	srv := &Server{cfg, mux.NewRouter()}
+	srv := &Server{cfg, mux.NewRouter(), auth.NewSessionManager(cfg.sessionTimeout)}
 
-	loginHandler := handlers.NewLoginHandler()
+	loginHandler := handlers.NewLoginHandler(srv.sm)
 	srv.router.Handle("/api/login", loginHandler).Methods("POST")
 
 	// NOTE: It's important that this handler be registered after the other handlers, or else

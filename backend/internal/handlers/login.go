@@ -2,17 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+
+	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 )
 
 // LoginHandler handles calls to "/api/login". Implements http.Handler
 type LoginHandler struct {
-	// TODO: Pass db/session manager pointers through from server.Server
+	sm *auth.SessionManager
 }
 
 // NewLoginHandler creates a new LoginHandler
-func NewLoginHandler() *LoginHandler {
-	return &LoginHandler{}
+func NewLoginHandler(sm *auth.SessionManager) *LoginHandler {
+	return &LoginHandler{sm}
 }
 
 type loginRequestBody struct {
@@ -21,17 +24,8 @@ type loginRequestBody struct {
 }
 
 type loginResponseBody struct {
-	Msg string `json:"msg"`
-}
-
-// Just for testing purposes, TODO: should be deleted
-func fakeAuthLogic(body *loginRequestBody, w http.ResponseWriter, r *http.Request) {
-	if body.Email == "admin@goteleport.com" && body.Password == "admin@goteleport.com" {
-		lrb := loginResponseBody{"Sign in succeeded"}
-		json.NewEncoder(w).Encode(lrb)
-	} else {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-	}
+	Msg       string         `json:"msg"`
+	SessionID auth.SessionID `json:"sessionID"`
 }
 
 // Handles user login
@@ -45,6 +39,19 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: remove
-	fakeAuthLogic(&body, w, r)
+	if body.Email == "admin@goteleport.com" && body.Password == "admin@goteleport.com" {
+		// TODO: "0" should become a real uuid
+		sessionID, err := lh.sm.CreateSession("0")
+		if err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		lrb := loginResponseBody{"Sign in succeeded", sessionID}
+		json.NewEncoder(w).Encode(lrb)
+	} else {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	}
+
 	return
 }
