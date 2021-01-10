@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/server"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 	certFilePath := flag.String("cert", "../certs/localhost.crt", "Relative path to a valid SSL cert")
 	keyFilePath := flag.String("key", "../certs/localhost.key", "Relative path to the cert's private key")
 	sessionTimeout := flag.String("sesh", "12h", "A parseable duration string (https://golang.org/pkg/time/#ParseDuration) specifying the absolute timeout value for user sessions")
+	env := flag.String("env", "prod", "System environment, can be one of \"dev\" or \"prod\"")
 	flag.Parse()
 
 	timeout, err := time.ParseDuration(*sessionTimeout)
@@ -20,8 +22,11 @@ func main() {
 		log.Fatalf("failed to parse duration string for command line flag sesh=%v; see https://golang.org/pkg/time/#ParseDuration", *sessionTimeout)
 	}
 
-	cfg := server.NewConfig(*port, *certFilePath, *keyFilePath, timeout)
-	srv := server.New(cfg)
+	cfg := server.NewConfig(*port, *certFilePath, *keyFilePath, timeout, *env)
+	srv, err := server.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Fatal(srv.Run())
 }

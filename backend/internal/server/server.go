@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/handlers"
 )
 
@@ -17,11 +18,12 @@ type Config struct {
 	certFilePath   string        // -cert; default "../certs/localhost.crt"
 	keyFilePath    string        // -key ; default "../certs/localhost.key"
 	sessionTimeout time.Duration // -sesh; default 12h
+	env            string        // -env; default "prod"
 }
 
 // NewConfig creates a new server.Config
-func NewConfig(port int, certFilePath string, keyFilePath string, sessionTimeout time.Duration) Config {
-	return Config{port, certFilePath, keyFilePath, sessionTimeout}
+func NewConfig(port int, certFilePath, keyFilePath string, sessionTimeout time.Duration, env string) Config {
+	return Config{port, certFilePath, keyFilePath, sessionTimeout, env}
 }
 
 // Server object initializes route handlers and external connections, and serves application
@@ -29,11 +31,17 @@ type Server struct {
 	cfg    Config
 	router *mux.Router
 	sm     *auth.SessionManager
+	db     *database.Database
 }
 
 // New initializes routes and handlers and returns a ready-to-run server
-func New(cfg Config) *Server {
-	srv := &Server{cfg, mux.NewRouter(), auth.NewSessionManager(cfg.sessionTimeout)}
+func New(cfg Config) (*Server, error) {
+	dbcfg := database.NewConfig(cfg.env)
+	db, err := database.New(dbcfg)
+	if err != nil {
+		return &Server{}, err
+	}
+	srv := &Server{cfg, mux.NewRouter(), auth.NewSessionManager(cfg.sessionTimeout), db}
 
 	loginHandler := handlers.NewLoginHandler(srv.sm)
 	srv.router.Handle("/api/login", loginHandler).Methods("POST")
@@ -43,7 +51,7 @@ func New(cfg Config) *Server {
 	spaHandler := handlers.NewSpaHandler("../frontend", "index.html")
 	srv.router.PathPrefix("/").Handler(spaHandler)
 
-	return srv
+	return srv, nil
 }
 
 // Run starts the server
