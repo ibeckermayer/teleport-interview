@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import './index.css';
+import { createStore } from './store';
 
 const App = () => {
   return (
@@ -20,4 +21,6 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const AppWithStore = createStore(App);
+
+ReactDOM.render(<AppWithStore />, document.getElementById('root'));

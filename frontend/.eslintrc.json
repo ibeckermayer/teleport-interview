@@ -17,6 +17,9 @@
       "required": {
         "some": [ "nesting", "id"  ]
       }
+    }],
+    "react/jsx-props-no-spreading": ["error", {
+      "exceptions": ["WrappedComponent"]
     }]
   }
 }
