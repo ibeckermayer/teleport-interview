@@ -15,7 +15,7 @@ type session struct {
 // SessionManager is an in-memory session store
 type SessionManager struct {
 	store   map[SessionID]*session
-	timeout time.Duration // Read only, does not need synchronization
+	timeout time.Duration // absolute timeout for individual sessions
 	mtx     sync.RWMutex
 }
 
@@ -34,7 +34,10 @@ func (sm *SessionManager) CreateSession(account *model.Account) (SessionID, erro
 		return "", err
 	}
 
+	// TODO: Do we really need an RLock here to read sm.timeout?
+	sm.mtx.RLock()
 	s := &session{account, time.Now().Add(sm.timeout)}
+	sm.mtx.RUnlock()
 
 	sm.mtx.Lock()
 	defer sm.mtx.Unlock()
