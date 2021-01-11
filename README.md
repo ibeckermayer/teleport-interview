@@ -21,14 +21,15 @@ This project is built and tested with [Docker](https://www.docker.com/get-starte
 
 Build the development Docker images by running
 
-```
-docker compose build -f docker-compose-dev.yml
+```bash
+# Uncomment --no-cache below if you've made any changes to the relevant Dockerfile's
+docker-compose -f docker-compose-dev.yml build #--no-cache
 ```
 
 and run them by running
 
-```
-docker compose up -f docker-compose-dev.yml
+```bash
+docker-compose -f docker-compose-dev.yml up
 ```
 
 This will start a hot-reload webpack development server serving the React app running on port 8080 and a hot-reload go server running on port 8000. Access the app in the browser by navigating to [https://0.0.0.0:8080/](https://0.0.0.0:8080/).
@@ -37,14 +38,14 @@ This will start a hot-reload webpack development server serving the React app ru
 
 Build the production Docker image by running
 
-```
-docker compose build -f docker-compose-prod.yml
+```bash
+docker-compose -f docker-compose-prod.yml build
 ```
 
 and run it by running
 
-```
-docker compose up -f docker-compose-prod.yml
+```bash
+docker-compose -f docker-compose-prod.yml up
 ```
 
 This will start a go server exposed over port 8000 serving the React app and go api. Access the app in the browser by navigating to [https://localhost:8000/](https://localhost:8000/).
