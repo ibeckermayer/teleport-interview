@@ -1,21 +1,24 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
 )
 
 // LoginHandler handles calls to "/api/login". Implements http.Handler
 type LoginHandler struct {
 	sm *auth.SessionManager
+	db *database.Database
 }
 
 // NewLoginHandler creates a new LoginHandler
-func NewLoginHandler(sm *auth.SessionManager) *LoginHandler {
-	return &LoginHandler{sm}
+func NewLoginHandler(sm *auth.SessionManager, db *database.Database) *LoginHandler {
+	return &LoginHandler{sm, db}
 }
 
 type loginRequestBody struct {
@@ -38,20 +41,34 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: remove
-	if body.Email == "admin@goteleport.com" && body.Password == "admin@goteleport.com" {
-		// TODO: "0" should become a real uuid
-		sessionID, err := lh.sm.CreateSession("0")
-		if err != nil {
-			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	account, err := lh.db.GetAccount(body.Email)
+
+	// Handle errors from attempting to retrieve the account from the database
+	if err != nil {
+		log.Println(err)
+		if err == sql.ErrNoRows {
+			// No record with the given email address exists
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-		lrb := loginResponseBody{"Sign in succeeded", sessionID}
-		json.NewEncoder(w).Encode(lrb)
-	} else {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	return
+	// Account retrieved, check password
+	if !(auth.CheckPasswordHash(body.Password, account.PasswordHash)) {
+		// Invalid password, unauthorized
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	// Valid password, create new session
+	sessionID, err := lh.sm.CreateSession(account)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(loginResponseBody{"Sign in succeeded", sessionID})
 }

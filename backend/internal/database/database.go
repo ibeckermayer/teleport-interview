@@ -1,8 +1,7 @@
 package database
 
 import (
-	"log"
-
+	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/pborman/uuid"
 )
@@ -49,15 +48,14 @@ func New(cfg Config) (*Database, error) {
 
 func (db *Database) init() error {
 
-	if _, err := db.db.Exec(accountSchema); err != nil {
+	if _, err := db.db.Exec(model.AccountTableSQL); err != nil {
 		return err
 	}
 
 	if db.cfg.env == "dev" {
 		// Fill the db with data for development purposes
 		// Ignore error so the server doesn't panic every time it's recompiled due to the email column failing the UNIQUE check
-		err := db.CreateAccount(uuid.New(), "dev@goteleport.com", "dev@goteleport.com")
-		log.Println(err)
+		db.CreateAccount(uuid.New(), "dev@goteleport.com", "dev@goteleport.com")
 	}
 
 	return nil

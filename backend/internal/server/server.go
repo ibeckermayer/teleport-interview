@@ -43,7 +43,7 @@ func New(cfg Config) (*Server, error) {
 	}
 	srv := &Server{cfg, mux.NewRouter(), auth.NewSessionManager(cfg.sessionTimeout), db}
 
-	loginHandler := handlers.NewLoginHandler(srv.sm)
+	loginHandler := handlers.NewLoginHandler(srv.sm, db)
 	srv.router.Handle("/api/login", loginHandler).Methods("POST")
 
 	// NOTE: It's important that this handler be registered after the other handlers, or else
