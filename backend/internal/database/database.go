@@ -6,9 +6,11 @@ import (
 	"github.com/pborman/uuid"
 )
 
-// Config is a database config object
+// Config is a database config object.
+// Env determines whether the production or development database is created/used;
+// if \"dev\", the app will seed the database with sample data for manual testing.
 type Config struct {
-	Env string // Determines whether the production or development database is created/used; if \"dev\", the app will seed the database with sample data for manual testing.
+	Env string
 }
 
 // Database is a handle to the database layer

@@ -73,7 +73,6 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(loginResponseBody{session.SessionID, session.Account.Plan}); err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
