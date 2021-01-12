@@ -4,6 +4,16 @@ import (
 	"time"
 )
 
+// Plan is the type of plan (FREE or ENTERPRISE) for a given account
+type Plan string
+
+const (
+	// FREE plan, 100 users
+	FREE = Plan("FREE")
+	// ENTERPRISE plan, 1000 users
+	ENTERPRISE = Plan("ENTERPRISE")
+)
+
 // AccountTableSQL is the SQL statement for creating a table corresponding to the Account model
 var AccountTableSQL = `CREATE TABLE IF NOT EXISTS account (
 	account_id CHARACTER(36) PRIMARY KEY,
@@ -16,7 +26,7 @@ var AccountTableSQL = `CREATE TABLE IF NOT EXISTS account (
 // Account represents a row in the "account" table.
 type Account struct {
 	AccountID    string    `db:"account_id"`
-	Plan         string    `db:"plan"` // One of "FREE" or "ENTERPRISE"
+	Plan         Plan      `db:"plan"` // One of "FREE" or "ENTERPRISE"
 	Email        string    `db:"email"`
 	PasswordHash string    `db:"password_hash"`
 	CreatedAt    time.Time `db:"created_at"`

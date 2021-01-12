@@ -27,7 +27,7 @@ func (db *Database) CreateAccount(accountID, email, password string) error {
 	}
 	account := &model.Account{
 		AccountID:    accountID,
-		Plan:         "FREE",
+		Plan:         model.FREE,
 		Email:        email,
 		PasswordHash: passwordHash,
 		CreatedAt:    time.Now(),

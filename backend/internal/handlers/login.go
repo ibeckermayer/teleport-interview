@@ -8,6 +8,7 @@ import (
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 )
 
 // LoginHandler handles calls to "/api/login". Implements http.Handler
@@ -28,7 +29,7 @@ type loginRequestBody struct {
 
 type loginResponseBody struct {
 	SessionID auth.SessionID `json:"sessionID"`
-	Plan      string         `json:"plan"`
+	Plan      model.Plan     `json:"plan"`
 }
 
 // Handles user login
@@ -70,5 +71,9 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(loginResponseBody{session.SessionID, session.Account.Plan})
+	if err := json.NewEncoder(w).Encode(loginResponseBody{session.SessionID, session.Account.Plan}); err != nil {
+		log.Println(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }

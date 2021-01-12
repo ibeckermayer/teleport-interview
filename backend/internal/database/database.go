@@ -8,12 +8,7 @@ import (
 
 // Config is a database config object
 type Config struct {
-	env string
-}
-
-// NewConfig returns a new Config for the database
-func NewConfig(env string) Config {
-	return Config{env}
+	Env string // Determines whether the production or development database is created/used; if \"dev\", the app will seed the database with sample data for manual testing.
 }
 
 // Database is a handle to the database layer
@@ -27,7 +22,7 @@ type Database struct {
 // New creates a new *Database and initializes it's schema.
 // Set filldb to true to fill the database with some fake data (for development purposes).
 func New(cfg Config) (*Database, error) {
-	dbfile := "./teleport-interview-" + cfg.env + ".db"
+	dbfile := "./teleport-interview-" + cfg.Env + ".db"
 	sqlxdb, err := sqlx.Open("sqlite3", dbfile)
 	if err != nil {
 		return nil, err
@@ -52,7 +47,7 @@ func (db *Database) init() error {
 		return err
 	}
 
-	if db.cfg.env == "dev" {
+	if db.cfg.Env == "dev" {
 		// Fill the db with data for development purposes
 		// Ignore error so the server doesn't panic every time it's recompiled due to the email column failing the UNIQUE check
 		db.CreateAccount(uuid.New(), "dev@goteleport.com", "dev@goteleport.com")
