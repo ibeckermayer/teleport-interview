@@ -2,7 +2,7 @@ import React, { createContext, useReducer, useEffect } from 'react';
 
 // Default state for the store
 const initialStore = {
-  sessionID: '', // Empty string represents user not authenticated
+  sessionID: '', // Empty string represents user not authenticated, otherwise they are authenticated
   plan: '', // "FREE" or "ENTERPRISE"
 };
 
