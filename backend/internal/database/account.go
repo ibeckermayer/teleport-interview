@@ -30,7 +30,9 @@ func (db *Database) CreateAccount(accountID, email, password string) error {
 		Plan:         "FREE",
 		Email:        email,
 		PasswordHash: passwordHash,
-		CreatedAt:    time.Now(), UpdatedAt: time.Now()}
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
 	err = db.insert(account)
 	return err
 }
