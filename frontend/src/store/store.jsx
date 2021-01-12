@@ -1,4 +1,5 @@
 import React, { createContext, useReducer, useEffect } from 'react';
+import { getLocalStore, setLocalStore } from '../localStorage';
 
 // Default state for the store
 const initialStore = {
@@ -7,7 +8,7 @@ const initialStore = {
 };
 
 // On app load, try to fetch a saved store from localStorage
-const localStore = JSON.parse(localStorage.getItem('store'));
+const localStore = getLocalStore();
 
 // Updates the store with newStoreValues
 // Pass `newStoreValues = null` to reset the store
@@ -33,7 +34,7 @@ const createStore = WrappedComponent => props => {
 
   // Save the store to localStorage every time it's changed
   useEffect(() => {
-    localStorage.setItem('store', JSON.stringify(store));
+    setLocalStore(store);
   }, [store]);
 
   return (
