@@ -27,8 +27,8 @@ type loginRequestBody struct {
 }
 
 type loginResponseBody struct {
-	Msg       string         `json:"msg"`
 	SessionID auth.SessionID `json:"sessionID"`
+	Plan      string         `json:"plan"`
 }
 
 // Handles user login
@@ -63,12 +63,12 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Valid password, create new session
-	sessionID, err := lh.sm.CreateSession(account)
+	session, err := lh.sm.CreateSession(account)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(loginResponseBody{"Sign in succeeded", sessionID})
+	json.NewEncoder(w).Encode(loginResponseBody{session.SessionID, session.Account.Plan})
 }

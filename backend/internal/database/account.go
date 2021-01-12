@@ -13,9 +13,9 @@ func (db *Database) insert(a *model.Account) error {
 }
 
 // GetAccount retrieves an Account from the database by email address
-func (db *Database) GetAccount(email string) (*model.Account, error) {
-	a := &model.Account{}
-	err := db.db.Get(a, "SELECT * FROM account WHERE email=$1", email)
+func (db *Database) GetAccount(email string) (model.Account, error) {
+	a := model.Account{}
+	err := db.db.Get(&a, "SELECT * FROM account WHERE email=$1", email)
 	return a, err
 }
 
