@@ -20,7 +20,7 @@ func (db *Database) GetAccount(email string) (model.Account, error) {
 }
 
 // CreateAccount creates a new account and saves it in the database. Returns the Account that was created.
-func (db *Database) CreateAccount(accountID string, email string, password string) error {
+func (db *Database) CreateAccount(accountID, email, password string) error {
 	passwordHash, err := auth.HashPassword(password)
 	if err != nil {
 		return err
