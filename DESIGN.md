@@ -60,9 +60,9 @@ Database queries will be sent with the `database/sql` package which uses [prepar
 
 #### Data model
 
-| account    |      |          |          |
-| ---------- | ---- | -------- | -------- |
-| account_id | plan | username | password |
+| account    |      |       |          |            |            |
+| ---------- | ---- | ----- | -------- | ---------- | ---------- |
+| account_id | plan | email | password | created_at | updated_at |
 
 Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/golang.org/x/crypto/bcrypt) package and later will be verified against the hash.
 
@@ -70,9 +70,9 @@ Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/g
 | ------- | ---------- | --------- |
 | user_id | account_id | is_active |
 
-| logins     |         |           |
-| ---------- | ------- | --------- |
-| account_id | user_id | timestamp |
+| logins     |         |           |            |            |
+| ---------- | ------- | --------- | ---------- | ---------- |
+| account_id | user_id | timestamp | created_at | updated_at |
 
 ## Endpoints
 
