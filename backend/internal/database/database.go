@@ -30,17 +30,17 @@ func New(cfg Config) (*Database, error) {
 	dbfile := "./teleport-interview-" + cfg.env + ".db"
 	sqlxdb, err := sqlx.Open("sqlite3", dbfile)
 	if err != nil {
-		return &Database{}, err
+		return nil, err
 	}
 
 	// force a connection and test that it worked
 	if err = sqlxdb.Ping(); err != nil {
-		return &Database{}, err
+		return nil, err
 	}
 
 	db := &Database{cfg, sqlxdb}
 	if err = db.init(); err != nil {
-		return &Database{}, err
+		return nil, err
 	}
 
 	return db, nil

@@ -56,7 +56,7 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Account retrieved, check password
-	if !(auth.CheckPasswordHash(body.Password, account.PasswordHash)) {
+	if !auth.CheckPasswordHash(body.Password, account.PasswordHash) {
 		// Invalid password, unauthorized
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
