@@ -15,7 +15,7 @@ const AppContext = ({ children }) => {
   // Consumers can update the store by calling setStore, or clear the store by passing in null
   const setStore = newStoreValues => {
     const newStore =
-      newStoreValues === null ? null : { ...store, newStoreValues };
+      newStoreValues === null ? null : { ...store, ...newStoreValues };
     setStoreI(newStore); // update store
     setLocalStore(newStore); // keep localStorage in sync
   };
