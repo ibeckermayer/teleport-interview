@@ -8,7 +8,7 @@ function Dashboard() {
     e.preventDefault();
     try {
       await api.delete('/logout');
-      setStore(null);
+      setStore(null); // Delete global store on success, <Authenticated> will handle re-routing to /login
     } catch (error) {
       // TODO: Probably should alert the user something along the lines of
       // "application error, please try again and contact customer support if the error persists"
