@@ -4,11 +4,11 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import './index.css';
-import { SessionContextProvider } from './session';
+import { AppContext } from './store';
 
 const App = () => {
   return (
-    <SessionContextProvider>
+    <AppContext>
       <Router>
         <Switch>
           <Route exact path="/">
@@ -19,7 +19,7 @@ const App = () => {
           </Route>
         </Switch>
       </Router>
-    </SessionContextProvider>
+    </AppContext>
   );
 };
 

@@ -1,7 +1,7 @@
-export function setLocalSession(session) {
-  localStorage.setItem('session', JSON.stringify(session));
+export function setLocalStore(store) {
+  localStorage.setItem('store', JSON.stringify(store));
 }
 
-export function getLocalSession() {
-  return JSON.parse(localStorage.getItem('session'));
+export function getLocalStore() {
+  return JSON.parse(localStorage.getItem('store'));
 }

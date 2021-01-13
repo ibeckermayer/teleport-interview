@@ -1,11 +1,11 @@
 import React, { useEffect, useContext } from 'react';
 import { useHistory } from 'react-router-dom';
 import api from '../../api';
-import { SessionContext } from '../../session';
+import { StoreContext } from '../../store';
 
 const Login = () => {
   const history = useHistory();
-  const [session, setSession] = useContext(SessionContext);
+  const { store, setStore } = useContext(StoreContext);
 
   const tryLogin = async e => {
     // Form validation is handled by html5
@@ -15,7 +15,7 @@ const Login = () => {
         email: e.target.email.value,
         password: e.target.password.value,
       });
-      setSession(newStore);
+      setStore(newStore);
     } catch (error) {
       // TODO: check for Unauthorized and alert user that username/pwd is incorrect, remove console error
       // eslint-disable-next-line no-console
@@ -24,10 +24,10 @@ const Login = () => {
   };
 
   useEffect(() => {
-    if (session) {
+    if (store) {
       history.push('/dashboard');
     }
-  }, [session]);
+  }, [store]);
 
   return (
     <form className="login-form" onSubmit={tryLogin}>
