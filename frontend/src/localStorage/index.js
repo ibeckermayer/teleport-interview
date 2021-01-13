@@ -1,3 +1,3 @@
-import { setLocalStore, getLocalStore } from './localStorage';
+import { setLocalSession, getLocalSession } from './localStorage';
 
-export { setLocalStore, getLocalStore };
+export { setLocalSession, getLocalSession };
