@@ -1,3 +1,3 @@
-import { StoreContext, createStore } from './store';
+import { StoreContext, AppContext } from './store';
 
-export { StoreContext, createStore };
+export { StoreContext, AppContext };
