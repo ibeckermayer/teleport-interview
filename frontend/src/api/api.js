@@ -1,3 +1,5 @@
+import { getLocalStore } from '../localStorage';
+
 function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response;
@@ -9,6 +11,15 @@ function checkStatus(response) {
 
 function parseJSON(response) {
   return response.json();
+}
+
+function getBearerTokenHeader() {
+  const store = getLocalStore();
+  const headers = {};
+  if (store) {
+    headers.Authorization = `Bearer ${store.sessionID}`;
+  }
+  return headers;
 }
 
 export default {
@@ -23,5 +34,12 @@ export default {
     });
     const responseChecked = await checkStatus(response);
     return parseJSON(responseChecked);
+  },
+  async delete(route) {
+    const response = await fetch(`api${route}`, {
+      method: 'DELETE',
+      headers: getBearerTokenHeader(),
+    });
+    return checkStatus(response);
   },
 };

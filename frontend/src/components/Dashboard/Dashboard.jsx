@@ -1,6 +1,22 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import api from '../../api';
+import { StoreContext } from '../../store';
 
 function Dashboard() {
+  const { setStore } = useContext(StoreContext);
+  const logout = async e => {
+    e.preventDefault();
+    try {
+      await api.delete('/logout');
+      setStore(null);
+    } catch (error) {
+      // TODO: Probably should alert the user something along the lines of
+      // "application error, please try again and contact customer support if the error persists"
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
+  };
+
   return (
     <div>
       <header className="top-nav">
@@ -8,7 +24,7 @@ function Dashboard() {
           <i className="material-icons">supervised_user_circle</i>
           User Management Dashboard
         </h1>
-        <button className="button is-border" type="button">
+        <button className="button is-border" type="button" onClick={logout}>
           Logout
         </button>
       </header>
