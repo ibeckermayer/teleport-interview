@@ -44,3 +44,21 @@ func (sm *SessionManager) CreateSession(account model.Account) (Session, error) 
 
 	return s, nil
 }
+
+// DeleteSession deletes a session from the session manager. Returns true if the session
+// was found and deleted, or false if the session wasn't found
+func (sm *SessionManager) DeleteSession(sid SessionID) bool {
+	// Check whether the session exists and return false if it doesn't
+	sm.mtx.RLock()
+	_, ok := sm.store[sid]
+	sm.mtx.RUnlock()
+	if !ok {
+		return ok
+	}
+	// Session does exist, delete it
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	delete(sm.store, sid)
+
+	return ok
+}

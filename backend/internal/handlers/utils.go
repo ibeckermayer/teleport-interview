@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 )
 
 type malformedRequest struct {
@@ -60,4 +62,27 @@ func handleJSONdecodeError(w http.ResponseWriter, err error) {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+// Helper function to retreive a token sent in standard "Bearer" format from a request
+// (https://tools.ietf.org/html/rfc6750#page-5). If the request doesn't contain an Authorization
+// header or the Authorization header is improperly formatted, getBearerToken returns "".
+// Handlers generally shouldn't call this function, and should instead call getSessionID or
+// getApiKey (TODO) to specify which type of token they are expecting.
+func getBearerToken(r *http.Request) string {
+	reqToken := r.Header.Get("Authorization")
+	if reqToken == "" {
+		// Request did not contain an Authorization header
+		return reqToken
+	}
+	splitToken := strings.Split(reqToken, "Bearer ")
+	if len(splitToken) == 1 {
+		// Split failed, request may have been improperly formatted
+		return ""
+	}
+	return splitToken[1]
+}
+
+func getSessionID(r *http.Request) auth.SessionID {
+	return auth.SessionID(getBearerToken(r))
 }
