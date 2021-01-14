@@ -1,10 +1,9 @@
-import React, { useEffect, useContext } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Redirect } from 'react-router-dom';
 import api from '../../api';
 import { StoreContext } from '../../store';
 
 const Login = () => {
-  const history = useHistory();
   const { store, setStore } = useContext(StoreContext);
 
   const tryLogin = async e => {
@@ -23,13 +22,9 @@ const Login = () => {
     }
   };
 
-  useEffect(() => {
-    if (store) {
-      history.push('/dashboard');
-    }
-  }, [store]);
-
-  return (
+  return store && store.sessionID ? (
+    <Redirect to="/dashboard" />
+  ) : (
     <form className="login-form" onSubmit={tryLogin}>
       <h1>Sign Into Your Account</h1>
 

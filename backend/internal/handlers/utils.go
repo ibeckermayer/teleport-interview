@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 )
 
 type malformedRequest struct {
@@ -60,4 +62,67 @@ func handleJSONdecodeError(w http.ResponseWriter, err error) {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+var (
+	errAuthHeaderNotFound     = errors.New("Authorization header expected but not found")
+	errAuthHeaderNotFormatted = errors.New("Authorization header was improperly formatted")
+)
+
+// Helper function to retreive a token sent in standard "Bearer" format from a request
+// (https://tools.ietf.org/html/rfc6750#page-5). If the request doesn't contain an Authorization
+// header or the Authorization header is improperly formatted, getBearerToken returns "".
+// Handlers generally shouldn't call this function, and should instead call getSessionID or
+// getApiKey (TODO) to specify which type of token they are expecting.
+func getBearerToken(r *http.Request) (string, error) {
+	reqToken := r.Header.Get("Authorization")
+	if reqToken == "" {
+		// Request did not contain an Authorization header
+		return "", errAuthHeaderNotFound
+	}
+	splitToken := strings.Split(reqToken, "Bearer ")
+	if len(splitToken) == 1 {
+		// Split failed, request may have been improperly formatted
+		return "", errAuthHeaderNotFormatted
+	}
+	return splitToken[1], nil
+}
+
+func getSessionID(r *http.Request) (auth.SessionID, error) {
+	s, err := getBearerToken(r)
+	return auth.SessionID(s), err
+}
+
+// handlerWithSession behaves like an ordinary http.Hander (https://golang.org/pkg/net/http/#Handler)
+// but expects an auth.Session
+type handlerWithSession interface {
+	ServeHTTP(w http.ResponseWriter, r *http.Request, session auth.Session)
+	GetSessionManager() *auth.SessionManager
+}
+
+// WithSessionAuth is middlewear for protecting HandlerWithSession's with sessionID auth
+func WithSessionAuth(hws handlerWithSession) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get sessionID from the request
+		sessionID, err := getSessionID(r)
+		if err != nil {
+			// Could not get sessionID, return 401
+			log.Println(err)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		// Attempt to get the corresponding session from the SessionManager
+		sm := hws.GetSessionManager()
+		session, err := sm.GetSession(sessionID)
+		if err != nil {
+			// Session does not exist or timed out
+			log.Println(err)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		// User is authorized, call the HandlerWithSession
+		hws.ServeHTTP(w, r, session)
+	})
 }

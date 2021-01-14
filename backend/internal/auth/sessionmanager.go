@@ -1,10 +1,19 @@
 package auth
 
 import (
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
+)
+
+var (
+	// ErrSessionTimeout is returned when a caller attempts to access a session that's expired
+	ErrSessionTimeout = errors.New("the session timed out")
+
+	// ErrSessionDNE is returned when a caller attempts to access a session that doesn't exist
+	ErrSessionDNE = errors.New("the session does not exist")
 )
 
 // Session is an individual user's session
@@ -43,4 +52,40 @@ func (sm *SessionManager) CreateSession(account model.Account) (Session, error) 
 	sm.store[sid] = s
 
 	return s, nil
+}
+
+// GetSession gets a session by sessionID if it exists and isn't expired, otherwise
+// it returns an empty Session object and a non-nil error
+func (sm *SessionManager) GetSession(sid SessionID) (Session, error) {
+	sm.mtx.RLock()
+	session, ok := sm.store[sid]
+	sm.mtx.RUnlock()
+
+	if !ok {
+		return Session{}, ErrSessionDNE
+	}
+
+	if time.Now().After(session.Expires) {
+		return Session{}, ErrSessionTimeout
+	}
+
+	return session, nil
+}
+
+// DeleteSession deletes a session from the session manager. Returns true if the session
+// was found and deleted, or false if the session wasn't found
+func (sm *SessionManager) DeleteSession(sid SessionID) bool {
+	// Check whether the session exists and return false if it doesn't
+	sm.mtx.RLock()
+	_, ok := sm.store[sid]
+	sm.mtx.RUnlock()
+	if !ok {
+		return ok
+	}
+	// Session does exist, delete it
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	delete(sm.store, sid)
+
+	return ok
 }

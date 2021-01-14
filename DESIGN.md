@@ -86,7 +86,7 @@ Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/g
 
 #### `/logout`
 
-**DELETE**: Access/session-id token protected. Deletes corresponding session.
+**DELETE**: Deletes the session corresponding to the passed sessionID.
 
 #### `/metrics`
 
