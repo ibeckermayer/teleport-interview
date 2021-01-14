@@ -1,6 +1,10 @@
 package database
 
 import (
+	"log"
+	"os"
+
+	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/pborman/uuid"
@@ -25,6 +29,10 @@ type Database struct {
 // Set filldb to true to fill the database with some fake data (for development purposes).
 func New(cfg Config) (*Database, error) {
 	dbfile := "./teleport-interview-" + cfg.Env + ".db"
+	if cfg.Env == "dev" {
+		// Reset db for every dev restart
+		os.Remove(dbfile)
+	}
 	sqlxdb, err := sqlx.Open("sqlite3", dbfile)
 	if err != nil {
 		return nil, err
@@ -49,10 +57,27 @@ func (db *Database) init() error {
 		return err
 	}
 
+	if _, err := db.db.Exec(model.APIkeyTableSQL); err != nil {
+		return err
+	}
+
 	if db.cfg.Env == "dev" {
 		// Fill the db with data for development purposes
-		// Ignore error so the server doesn't panic every time it's recompiled due to the email column failing the UNIQUE check
-		db.CreateAccount(uuid.New(), "dev@goteleport.com", "dev@goteleport.com")
+		devNamePwd := "dev@goteleport.com"
+		fakeiotTestNamePwd := "test@goteleport.com"
+		devAcctID := uuid.New()
+		fakeiotTestAcctID := "testacct-0000-0000-0000-000000000000"
+		devKey, _ := auth.NewKey()
+		fakeiotTestKey, _ := auth.NewKey()
+
+		db.CreateAccount(devAcctID, devNamePwd, devNamePwd)
+		db.CreateAccount(fakeiotTestAcctID, fakeiotTestNamePwd, fakeiotTestNamePwd)
+		db.CreateAPIkey(devKey, devAcctID)
+		db.CreateAPIkey(fakeiotTestKey, fakeiotTestAcctID)
+
+		log.Printf("Created dev account with account_id=%v, username/pwd=%v, and token=%v", devAcctID, devNamePwd, devKey)
+		log.Printf("Created fakeiot test account with account_id=%v, username/pwd=%v, and token=%v", fakeiotTestAcctID, fakeiotTestNamePwd, fakeiotTestKey)
+
 	}
 
 	return nil

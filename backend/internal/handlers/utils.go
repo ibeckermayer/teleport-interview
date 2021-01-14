@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+// BodyMaxSize is the maximum size of a json body
+var BodyMaxSize int64 = 1048576 // 1MB
+
 type malformedRequest struct {
 	status int    // HTTP status
 	logMsg string // Detailed message for logging, not to be returned to clients
@@ -29,7 +32,7 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 		}
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB
+	r.Body = http.MaxBytesReader(w, r.Body, BodyMaxSize)
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()

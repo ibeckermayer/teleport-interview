@@ -42,7 +42,7 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := lh.db.GetAccount(body.Email)
+	account, err := lh.db.GetAccountByEmail(body.Email)
 
 	// Handle errors from attempting to retrieve the account from the database
 	if err != nil {
