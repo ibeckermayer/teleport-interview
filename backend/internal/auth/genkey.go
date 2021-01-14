@@ -42,3 +42,13 @@ func newSessionID() (SessionID, error) {
 	s, err := generateRandomString(32)
 	return SessionID(s), err
 }
+
+// Key is a 32 byte, base64 encoded, cryptographically secure random string
+type Key string
+
+// newKey creates a new API Key. It will return an error if the system's secure random
+// number generator fails to function correctly, in which case the caller should not continue.
+func newKey() (Key, error) {
+	s, err := generateRandomString(32)
+	return Key(s), err
+}
