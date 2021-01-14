@@ -60,19 +60,23 @@ Database queries will be sent with the `database/sql` package which uses [prepar
 
 #### Data model
 
-| account    |      |       |          |            |            |
-| ---------- | ---- | ----- | -------- | ---------- | ---------- |
-| account_id | plan | email | password | created_at | updated_at |
+| account    |      |       |               |            |            |
+| ---------- | ---- | ----- | ------------- | ---------- | ---------- |
+| account_id | plan | email | password_hash | created_at | updated_at |
 
 Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/golang.org/x/crypto/bcrypt) package and later will be verified against the hash.
 
-| user    |            |           |
-| ------- | ---------- | --------- |
-| user_id | account_id | is_active |
+| user    |            |           |            |            |
+| ------- | ---------- | --------- | ---------- | ---------- |
+| user_id | account_id | is_active | created_at | updated_at |
 
-| logins     |         |           |            |            |
-| ---------- | ------- | --------- | ---------- | ---------- |
-| account_id | user_id | timestamp | created_at | updated_at |
+| logins     |         |           |
+| ---------- | ------- | --------- |
+| account_id | user_id | timestamp |
+
+| apikey   |            |
+| -------- | ---------- |
+| key_hash | account_id |
 
 ## Endpoints
 
@@ -86,7 +90,7 @@ Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/g
 
 #### `/metrics`
 
-**POST**: API key protected. Updates the `logins` table with a new row. If a new `account_id` is recieved, updates the `account` table with a corresponding account on the startup plan. For each new `account_id`/`user_id` combination that's recieved, a new entry in the `user` table is created; the `is_active` column is determined by whether the corresponding account has exceeded it's plan's usage limits.
+**POST**: API key protected. The request body must contain a pre registered `account_id` and the Authorization header it's valid corresponding API key. Updates the `logins` table with a new row. For each new `account_id`/`user_id` combination that's recieved, a new entry in the `user` table is created; the `is_active` column is determined by whether the corresponding account has exceeded it's plan's usage limits.
 
 **GET**: Access/session-id token protected. Returns the plan's current number of active users and plan type/user-limit.
 
