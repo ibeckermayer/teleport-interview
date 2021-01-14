@@ -117,15 +117,16 @@ func (sm *SessionManager) DeleteSession(ctx context.Context) bool {
 // was found and deleted, or false if the session wasn't found
 func (sm *SessionManager) deleteSession(sid SessionID) bool {
 	// Check whether the session exists and return false if it doesn't
-	sm.mtx.RLock()
+	// NOTE from awly: All of this should happen under a single write lock.
+	// If you put an RLock around the sm.store[sid] and a Lock around delete(sm.store, sid)
+	// and have 2 concurrent deleteSession calls, they might intertwine their read/write locks and return the wrong bool.
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
 	_, ok := sm.store[sid]
-	sm.mtx.RUnlock()
 	if !ok {
 		return ok
 	}
 	// Session does exist, delete it
-	sm.mtx.Lock()
-	defer sm.mtx.Unlock()
 	delete(sm.store, sid)
 
 	return ok
@@ -147,8 +148,9 @@ func getBearerToken(r *http.Request) (string, error) {
 		// Request did not contain an Authorization header
 		return "", errAuthHeaderNotFound
 	}
-	splitToken := strings.Split(reqToken, "Bearer ")
-	if len(splitToken) == 1 {
+
+	splitToken := strings.Fields(reqToken)
+	if len(splitToken) != 2 || splitToken[0] != "Bearer" {
 		// Split failed, request may have been improperly formatted
 		return "", errAuthHeaderNotFormatted
 	}
