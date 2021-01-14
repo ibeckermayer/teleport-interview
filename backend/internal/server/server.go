@@ -42,7 +42,7 @@ func New(cfg Config) (*Server, error) {
 	srv.router.Handle("/api/login", loginHandler).Methods("POST")
 
 	logoutHandler := handlers.NewLogoutHandler(srv.sm)
-	srv.router.Handle("/api/logout", handlers.WithSessionAuth(logoutHandler)).Methods("DELETE")
+	srv.router.Handle("/api/logout", srv.sm.WithSessionAuth(logoutHandler)).Methods("DELETE")
 
 	// NOTE: It's important that this handler be registered after the other handlers, or else
 	// all routes return a 404 (at least in development). TODO: figure out why this is the case.

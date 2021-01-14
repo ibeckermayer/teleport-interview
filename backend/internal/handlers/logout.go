@@ -17,16 +17,11 @@ func NewLogoutHandler(sm *auth.SessionManager) *LogoutHandler {
 	return &LogoutHandler{sm}
 }
 
-// GetSessionManager returns the global SessionManager
-func (lh *LogoutHandler) GetSessionManager() *auth.SessionManager {
-	return lh.sm
-}
-
-func (lh *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, s auth.Session) {
+func (lh *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Couldn't find session. Log that this happened and return a 204
 	// to alert the client to behave as if the user is logged out.
-	if !lh.sm.DeleteSession(s.SessionID) {
-		log.Printf("logout attempted but could not find session %v", s.SessionID)
+	if !lh.sm.DeleteSession(r.Context()) {
+		log.Println("logout attempted but could not find session")
 	}
 
 	w.WriteHeader(http.StatusNoContent)
