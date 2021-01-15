@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -24,13 +23,7 @@ var (
 // Package specific contextKey type
 type contextKey string
 
-// newContextKey generates a key for storing and accessing values in context.Context.
-// It has a package specific prefix plus additional entropy for added safety, in order
-// to prevent key collisions with other packages.
-func newContextKey() (contextKey, error) {
-	s, err := generateRandomString(8)
-	return contextKey(fmt.Sprintf("teleport-interview-auth.%v", s)), err
-}
+var theContextKey = contextKey("teleport-interview-auth")
 
 // Session is an individual user's session
 type Session struct {
@@ -52,12 +45,10 @@ type SessionManager struct {
 
 // NewSessionManager creates a new *SessionManager
 func NewSessionManager(timeout time.Duration) *SessionManager {
-	ck, err := newContextKey()
-	if err != nil {
-		// Fail here, this is an operating system error plus the app cannot function without contextKey
-		panic(err)
-	}
-	return &SessionManager{store: make(map[SessionID]Session), timeout: timeout, contextKey: ck}
+	return &SessionManager{
+		store:      make(map[SessionID]Session),
+		timeout:    timeout,
+		contextKey: theContextKey}
 }
 
 // CreateSession creates a new session in the SessionManager's store, indexed by a
