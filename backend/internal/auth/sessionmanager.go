@@ -91,35 +91,30 @@ func (sm *SessionManager) getSession(sid SessionID) (Session, error) {
 
 	if time.Now().After(session.Expires) {
 		// Session expired, delete it from memory
-		sm.deleteSession(sid)
+		sm.DeleteSession(sid)
 		return Session{}, ErrSessionTimeout
 	}
 
 	return session, nil
 }
 
-func (sm *SessionManager) getSessionFromContext(ctx context.Context) Session {
+// FromContext gets a Session from a request context. WithSessionAuth-wrapped handlers should
+// use this to access Session data from within the handler
+func (sm *SessionManager) FromContext(ctx context.Context) (Session, error) {
 	session, ok := ctx.Value(sm.contextKey).(Session)
 	if !ok {
-		// Should be impossible
-		panic("No Session in context, software design error")
+		return Session{}, errors.New("type assertion from context.Context value to Session failed")
 	}
-	return session
-}
-
-// DeleteSession deletes the session in ctx from the SessionManager
-func (sm *SessionManager) DeleteSession(ctx context.Context) bool {
-	session := sm.getSessionFromContext(ctx)
-	return sm.deleteSession(session.SessionID)
+	return session, nil
 }
 
 // DeleteSession deletes a session from the session manager. Returns true if the session
 // was found and deleted, or false if the session wasn't found
-func (sm *SessionManager) deleteSession(sid SessionID) bool {
+func (sm *SessionManager) DeleteSession(sid SessionID) bool {
 	// Check whether the session exists and return false if it doesn't
 	// NOTE from awly: All of this should happen under a single write lock.
 	// If you put an RLock around the sm.store[sid] and a Lock around delete(sm.store, sid)
-	// and have 2 concurrent deleteSession calls, they might intertwine their read/write locks and return the wrong bool.
+	// and have 2 concurrent DeleteSession calls, they might intertwine their read/write locks and return the wrong bool.
 	sm.mtx.Lock()
 	defer sm.mtx.Unlock()
 	_, ok := sm.store[sid]
@@ -137,7 +132,7 @@ var (
 	errAuthHeaderNotFormatted = errors.New("Authorization header was improperly formatted")
 )
 
-// Helper function to retreive a token sent in standard "Bearer" format from a request
+// getBearerToken is a helper function to retreive a token sent in standard "Bearer" format from a request
 // (https://tools.ietf.org/html/rfc6750#page-5). If the request doesn't contain an Authorization
 // header or the Authorization header is improperly formatted, getBearerToken returns "".
 // Handlers generally shouldn't call this function, and should instead call getSessionID or
