@@ -52,12 +52,20 @@ func New(cfg Config) (*Database, error) {
 }
 
 func (db *Database) init() error {
-
+	// Create all tables if they don't exist
 	if _, err := db.db.Exec(model.AccountTableSQL); err != nil {
 		return err
 	}
 
 	if _, err := db.db.Exec(model.APIkeyTableSQL); err != nil {
+		return err
+	}
+
+	if _, err := db.db.Exec(model.MetricTableSQL); err != nil {
+		return err
+	}
+
+	if _, err := db.db.Exec(model.UserTableSQL); err != nil {
 		return err
 	}
 
