@@ -29,6 +29,7 @@ export default {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        ...getBearerTokenHeader(),
       },
       body: JSON.stringify(body),
     });
@@ -41,5 +42,16 @@ export default {
       headers: getBearerTokenHeader(),
     });
     return checkStatus(response);
+  },
+  async get(route) {
+    const response = await fetch(`api${route}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...getBearerTokenHeader(),
+      },
+    });
+    const responseChecked = await checkStatus(response);
+    return parseJSON(responseChecked);
   },
 };
