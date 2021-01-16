@@ -25,8 +25,6 @@ type metricsPostRequestBody struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// type metricsPostResponseBody struct{}
-
 // Handles "/api/metrics" POST requests. Should be wrapped with WithAPIkeyAuth middlewear
 func (mph *MetricsPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body metricsPostRequestBody
