@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
 // LogoutHandler handles calls to "/api/logout". Implements HandlerWithSession
@@ -21,7 +22,7 @@ func (lh *LogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := lh.sm.FromContext(r.Context())
 	if err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 	// Couldn't find session. Log that this happened and return a 204

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
 // MetricsPostHandler handles calls to "api/metrics"
@@ -24,25 +25,34 @@ type metricsPostRequestBody struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+// type metricsPostResponseBody struct{}
+
 // Handles "/api/metrics" POST requests. Should be wrapped with WithAPIkeyAuth middlewear
 func (mph *MetricsPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body metricsPostRequestBody
 
 	// Decode json
-	err := decodeJSONBody(w, r, &body)
+	err := util.DecodeJSONBody(w, r, &body)
 	if err != nil {
-		handleJSONdecodeError(w, err)
+		util.HandleJSONdecodeError(w, err)
 		return
 	}
 
 	// Save the metric to the database
+	// TODO: should metric be saved regardless of whether CreateUser below fails?
 	if err := mph.db.CreateMetric(body.AccountID, body.UserID, body.Timestamp); err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	// Check if this user exists
-
-	// If user DNE, save new user to the database
+	_, err = mph.db.GetUser(body.UserID)
+	if err != nil {
+		// If user DNE, save new user to the database
+		if err := mph.db.CreateUser(body.UserID, body.AccountID); err != nil {
+			log.Println(err)
+			util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
 }

@@ -7,9 +7,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
-	"github.com/ibeckermayer/teleport-interview/backend/internal/handlers"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
+)
+
+var (
+	errBadAccountID = errors.New("account ID improperly formatted")
 )
 
 func getAPIkey(r *http.Request) (auth.Key, error) {
@@ -26,17 +31,17 @@ func getAccountIDfromBody(w http.ResponseWriter, r *http.Request) (string, error
 	if r.Body == nil {
 		err := errors.New("request body was nil")
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		util.ErrorJSON(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return "", err
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, handlers.BodyMaxSize) // limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, util.BodyMaxSize) // limit request body size
 
 	// Read request body into buffer
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return "", err
 	}
 
@@ -46,7 +51,7 @@ func getAccountIDfromBody(w http.ResponseWriter, r *http.Request) (string, error
 	// Unmarshal json
 	if err := json.Unmarshal(bodyBytes, &b); err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return "", err
 	}
 
@@ -55,10 +60,20 @@ func getAccountIDfromBody(w http.ResponseWriter, r *http.Request) (string, error
 	if !ok {
 		err := errors.New("request body missing required field \"account_id\"")
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
+		util.ErrorJSON(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return "", err
 	}
 	accountID := string(accountIDraw)
+	accountID = strings.TrimPrefix(accountID, "\"")
+	accountID = strings.TrimSuffix(accountID, "\"")
+
+	// Quick and dirty check that accountID is 36 character string.
+	// TODO: change this to a regex for the uuid format
+	if len(accountID) != 36 {
+		log.Println(errBadAccountID)
+		util.ErrorJSON(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return "", errBadAccountID
+	}
 
 	// Now that accountID is extracted, restore request body to its original state so that next can use it
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -76,32 +91,46 @@ func (srv *Server) WithAPIkeyAuth(next http.Handler) http.Handler {
 		if err != nil {
 			// Could not get APIkey, return 401
 			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
 		// Get accoutID from the request body
 		accountID, err := getAccountIDfromBody(w, r)
 		if err != nil {
+			// getAccountIDfromBody takes care of error handling and logging, return immediately
 			return
 		}
 
 		// Get corresponding row from the apikey table in the database
 		apikey, err := srv.db.GetAPIkey(accountID)
 		if err != nil {
-			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			log.Printf("could not find apikey for account_id=%v", accountID)
+			// w.WriteHeader(http.StatusForbidden)
+			util.ErrorJSON(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
 		// Check that key hashes match
 		if !auth.CheckKeyHash(key, apikey.KeyHash) {
 			log.Printf("recieved invalid api key for account %v", accountID)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			// w.WriteHeader(http.StatusForbidden)
+			util.ErrorJSON(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
 		// Request authorized, call next
+		next.ServeHTTP(w, r)
+	})
+}
+
+// WithAPIHeaders adds security headers to the wrapped handler
+func WithAPIHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.Header().Add("Strict-Transport-Security", "max-age=6307200; includeSubDomains")
+		w.Header().Add("X-Content-Type-Options", "nosniff")
+		w.Header().Add("X-Permitted-Cross-Domain-Policies", "none")
 		next.ServeHTTP(w, r)
 	})
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
 var (
@@ -165,7 +166,7 @@ func (sm *SessionManager) WithSessionAuth(next http.Handler) http.Handler {
 		if err != nil {
 			// Could not get sessionID, return 401
 			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
@@ -173,7 +174,7 @@ func (sm *SessionManager) WithSessionAuth(next http.Handler) http.Handler {
 		if err != nil {
 			// Session does not exist or timed out
 			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 

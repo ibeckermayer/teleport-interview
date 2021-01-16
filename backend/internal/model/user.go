@@ -3,7 +3,7 @@ package model
 import "time"
 
 // UserTableSQL is the SQL statement for createing a table corresponding to the User model
-var UserTableSQL = `CREATE TABLE IF NOT EXISTS metric (
+var UserTableSQL = `CREATE TABLE IF NOT EXISTS user (
 	user_id CHARACTER(36) PRIMARY KEY,
 	account_id CHARACTER(36),
 	is_active INTEGER,

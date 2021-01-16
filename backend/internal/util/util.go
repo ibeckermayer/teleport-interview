@@ -1,4 +1,4 @@
-package handlers
+package util
 
 import (
 	"encoding/json"
@@ -22,9 +22,9 @@ func (mr malformedRequest) Error() string {
 	return mr.logMsg
 }
 
-// Modified version of https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
+// DecodeJSONBody is a modified version of https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
 // Attempts to decode a json request body into dst, returning an error if it fails
-func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	if r.Header.Get("Content-Type") != "" {
 		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 			msg := "Content-Type header is not application/json"
@@ -51,16 +51,36 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 	return nil
 }
 
-// Helper function for responding to requests that cause decodeJSONBody to throw an error.
+// HandleJSONdecodeError is a helperr function for responding to requests that cause decodeJSONBody to throw an error.
 // Logs a detailed error message and responds to the client with a generic HTTP error message.
 // The caller should ensure no further writes are done to w.
-func handleJSONdecodeError(w http.ResponseWriter, err error) {
+func HandleJSONdecodeError(w http.ResponseWriter, err error) {
 	var mr *malformedRequest
 	if errors.As(err, &mr) {
 		log.Println(mr)
-		http.Error(w, http.StatusText(mr.status), mr.status)
+		ErrorJSON(w, http.StatusText(mr.status), mr.status)
 	} else {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+type errorJSON struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
+type errorJSONbody struct {
+	Error errorJSON `json:"error"`
+}
+
+// ErrorJSON is a replacement for http.Error for use by endpoints with Content-Type header "application/json".
+// http.Error should not be used because it overwrites the Content-Type header to "text/plain"
+func ErrorJSON(w http.ResponseWriter, error string, code int) {
+	w.WriteHeader(code)
+	ejb := errorJSONbody{errorJSON{code, error}}
+	if err := json.NewEncoder(w).Encode(ejb); err != nil {
+		log.Println(err)
+		return
 	}
 }

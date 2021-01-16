@@ -14,6 +14,12 @@ const (
 	ENTERPRISE = Plan("ENTERPRISE")
 )
 
+// PlanMaxUsers specifies the maximum number of users for each plan
+var PlanMaxUsers = map[Plan]int{
+	FREE:       100,
+	ENTERPRISE: 1000,
+}
+
 // AccountTableSQL is the SQL statement for creating a table corresponding to the Account model
 var AccountTableSQL = `CREATE TABLE IF NOT EXISTS account (
 	account_id CHARACTER(36) PRIMARY KEY,

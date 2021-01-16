@@ -12,6 +12,13 @@ func (db *Database) insertAccount(a *model.Account) error {
 	return err
 }
 
+// GetAccount retrieves an Account from the database by accountID
+func (db *Database) GetAccount(accountID string) (model.Account, error) {
+	a := model.Account{}
+	err := db.db.Get(&a, "SELECT * FROM account WHERE account_id=$1", accountID)
+	return a, err
+}
+
 // GetAccountByEmail retrieves an Account from the database by email address
 func (db *Database) GetAccountByEmail(email string) (model.Account, error) {
 	a := model.Account{}
