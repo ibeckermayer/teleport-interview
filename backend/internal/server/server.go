@@ -47,6 +47,9 @@ func New(cfg Config) (*Server, error) {
 	metricsPostHandler := WithAPIHeaders(srv.WithAPIkeyAuth(handlers.NewMetricsPostHandler(srv.db)))
 	srv.router.Handle("/api/metrics", metricsPostHandler).Methods("POST")
 
+	metricsGetHandler := WithAPIHeaders(srv.sm.WithSessionAuth(handlers.NewMetricsGetHandler(srv.sm, srv.db)))
+	srv.router.Handle("/api/metrics", metricsGetHandler).Methods("GET")
+
 	// NOTE: It's important that this handler be registered after the other handlers, or else
 	// all routes return a 404 (at least in development). TODO: figure out why this is the case.
 	spaHandler := WithHTMLHeaders(handlers.NewSpaHandler("../frontend", "index.html"))
