@@ -128,9 +128,25 @@ func (srv *Server) WithAPIkeyAuth(next http.Handler) http.Handler {
 func WithAPIHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
-		w.Header().Add("Strict-Transport-Security", "max-age=6307200; includeSubDomains")
+		w.Header().Add("Strict-Transport-Security", "max-age=631138519; includeSubDomains")
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 		w.Header().Add("X-Permitted-Cross-Domain-Policies", "none")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// WithHTMLHeaders adds security headers for serving an html page / spa app.
+// Based on https://github.com/github/secure_headers
+func WithHTMLHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: need to figure out Content-Type header that will work with X-Content-Type-Options: nosniff
+		// TODO: This Content-Security-Policy may block some css that we need (untested)
+		w.Header().Add("Content-Security-Policy", "default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src https:; style-src 'self' https: 'unsafe-inline'")
+		w.Header().Add("Strict-Transport-Security", "max-age=631138519; includeSubDomains")
+		w.Header().Add("X-Download-Options", "noopen")
+		w.Header().Add("X-Frame-Options", "sameorigin")
+		w.Header().Add("X-Permitted-Cross-Domain-Policies", "none")
+		w.Header().Add("X-Xss-Protection", "1; mode=block")
 		next.ServeHTTP(w, r)
 	})
 }
