@@ -54,4 +54,15 @@ export default {
     const responseChecked = await checkStatus(response);
     return parseJSON(responseChecked);
   },
+  async patch(route) {
+    const response = await fetch(`api${route}`, {
+      method: 'PATCH',
+      headers: {
+        Accept: 'application/json',
+        ...getBearerTokenHeader(),
+      },
+    });
+    const responseChecked = await checkStatus(response);
+    return parseJSON(responseChecked);
+  },
 };

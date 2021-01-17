@@ -30,6 +30,9 @@ func (db *Database) CountUsers(accountID string) (int, error) {
 // whether the new User is active based on if the associated account has reached the
 // user limit on its current plan.
 func (db *Database) CreateUser(userID, accountID string) error {
+	createUserUpgradeAccountLock.Lock()
+	defer createUserUpgradeAccountLock.Unlock()
+
 	account, err := db.GetAccount(accountID)
 	if err != nil {
 		// Could not find account, don't create orphaned user

@@ -12,6 +12,40 @@ func (db *Database) insertAccount(a *model.Account) error {
 	return err
 }
 
+// UpgradeAccount upgrades an account from the FREE to the ENTERPRISE plan. It also updates
+// any users in that account that were previously inactive to active. Returns the total number of users
+// for the given accountID for ease of use by the UpgradeHandler.
+// TODO: handle case when there wind up being more users than the ENTERPRISE plan allows
+func (db *Database) UpgradeAccount(accountID string) (int, error) {
+	createUserUpgradeAccountLock.Lock()
+	defer createUserUpgradeAccountLock.Unlock()
+
+	tx, err := db.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	// Update the account
+	_, err = tx.Exec("UPDATE account SET plan=$1 WHERE account_id=$2", model.ENTERPRISE, accountID)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	_, err = tx.Exec("UPDATE user SET is_active=$1 WHERE is_active=$2 AND account_id=$3", true, false, accountID)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	totalUsers, err := db.CountUsers(accountID)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return totalUsers, tx.Commit()
+}
+
 // GetAccount retrieves an Account from the database by accountID
 func (db *Database) GetAccount(accountID string) (model.Account, error) {
 	a := model.Account{}
