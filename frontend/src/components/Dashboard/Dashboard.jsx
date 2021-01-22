@@ -1,4 +1,3 @@
-/* eslint-disable no-constant-condition */
 import React, { useContext, useState } from 'react';
 import api from '../../api';
 import { StoreContext } from '../../store';
@@ -8,11 +7,16 @@ function Dashboard() {
   const { setStore } = useContext(StoreContext);
 
   // TODO: save and restore state to/from localStorage to improve UX on login
+  // Currently the better UX is to start at ENTERPRISE so that the Upgrade button
+  // appears slightly after load for free users (on first pollMetrics result), vs starting at FREE where the Upgrade
+  // button then jarringly dissapears for enterprise users slightly after load
   const [state, setState] = useState({
-    plan: 'FREE', // TODO: make global const
-    maxUsers: 100, // TODO: make global const
+    plan: 'ENTERPRISE', // TODO: make global const
+    maxUsers: 1000, // TODO: make global const
     totalUsers: 0,
   });
+
+  const [showUpgradedBanner, setShowUpgradedBanner] = useState(false);
 
   // Polling function to get a near-continuous stream of metrics for this account
   const pollMetrics = async () => {
@@ -26,7 +30,9 @@ function Dashboard() {
         // <Authenticated> component will redirect the user to login page
         setStore(null);
       } else {
-        // TODO send to some error logging service
+        // TODO send to some error logging service, for now just log. Don't necessarily
+        // want to setStore(null) here, since it might just be one bad response and polling can
+        // continue. Perhaps after a certain number in a row the app should setStore(null) and bail out.
         // eslint-disable-next-line no-console
         console.error(error);
       }
@@ -45,8 +51,7 @@ function Dashboard() {
     } catch (error) {
       // TODO: Probably should alert the user something along the lines of
       // "application error, please try again and contact customer support if the error persists"
-      // eslint-disable-next-line no-console
-      console.error(error);
+      setStore(null);
     }
   };
 
@@ -57,6 +62,25 @@ function Dashboard() {
       state.totalUsers <= state.maxUsers ? state.totalUsers : state.maxUsers;
     const den = state.maxUsers;
     return `${(num / den) * 100}%`;
+  };
+
+  // Core logic for flashing the upgrade banner on screen for 3 seconds after
+  // successful upgrade
+  const flashUpgradeBanner = () => {
+    setShowUpgradedBanner(true);
+    setTimeout(() => {
+      setShowUpgradedBanner(false);
+    }, 3000);
+  };
+
+  const upgrade = async () => {
+    try {
+      const newState = await api.patch('/upgrade');
+      setState(newState);
+      flashUpgradeBanner();
+    } catch (error) {
+      setStore(null);
+    }
   };
 
   return (
@@ -76,13 +100,17 @@ function Dashboard() {
           upgrade your plan to increase the limit.
         </div>
       ) : null}
-      {null ? (
+      {showUpgradedBanner ? (
         <div className="alert is-success">
           Your account has been upgraded successfully!
         </div>
       ) : null}
       <div className="plan">
-        <header>Startup Plan - $100/Month</header>
+        {state.plan === 'FREE' ? (
+          <header>Startup Plan - $100/Month</header>
+        ) : (
+          <header>Enterprise Plan - $1000/Month</header>
+        )}
 
         <div className="plan-content">
           <div className="progress-bar">
@@ -103,7 +131,11 @@ function Dashboard() {
 
         <footer>
           {state.plan === 'FREE' ? (
-            <button className="button is-success" type="button">
+            <button
+              className="button is-success"
+              type="button"
+              onClick={upgrade}
+            >
               Upgrade to Enterprise Plan
             </button>
           ) : null}

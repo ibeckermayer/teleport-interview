@@ -3,12 +3,18 @@ package database
 import (
 	"log"
 	"os"
+	"sync"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/pborman/uuid"
 )
+
+// createUserUpgradeAccountLock is used to ensure data integrity during calls of CreateUser and UpgradeAccount.
+// If CreateUser gets called in the middle of the transaction in UpgradeAccount, the new user might be created with
+// is_active set to false when it should really be set to true (since it's corresponding Account was being upgraded).
+var createUserUpgradeAccountLock = sync.Mutex{}
 
 // Config is a database config object.
 // Env determines whether the production or development database is created/used;
@@ -18,8 +24,6 @@ type Config struct {
 }
 
 // Database is a handle to the database layer
-// TODO: This should eventually take a database.Config object to swap out
-// different drivers/settings/security features
 type Database struct {
 	cfg Config
 	db  *sqlx.DB
@@ -43,7 +47,7 @@ func New(cfg Config) (*Database, error) {
 		return nil, err
 	}
 
-	db := &Database{cfg, sqlxdb}
+	db := &Database{cfg: cfg, db: sqlxdb}
 	if err = db.init(); err != nil {
 		return nil, err
 	}

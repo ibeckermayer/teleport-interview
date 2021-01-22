@@ -70,6 +70,13 @@ func (sm *SessionManager) CreateSession(account model.Account) (Session, error) 
 	return s, nil
 }
 
+// UpdateSession updates a session in the session manager with the new session passed in to it.
+func (sm *SessionManager) UpdateSession(session Session) {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	sm.store[session.SessionID] = session
+}
+
 // getSession gets a session by sessionID if it exists and isn't expired, otherwise
 // it returns an empty Session object and a non-nil error
 func (sm *SessionManager) getSession(sid SessionID) (Session, error) {
