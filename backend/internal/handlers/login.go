@@ -8,7 +8,6 @@ import (
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
-	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
@@ -30,7 +29,6 @@ type loginRequestBody struct {
 
 type loginResponseBody struct {
 	SessionID auth.SessionID `json:"sessionID"`
-	Plan      model.Plan     `json:"plan"`
 }
 
 // Handles user login
@@ -72,7 +70,7 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(loginResponseBody{session.SessionID, session.Account.Plan}); err != nil {
+	if err := json.NewEncoder(w).Encode(loginResponseBody{session.SessionID}); err != nil {
 		log.Println(err)
 		return
 	}
