@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
 var (
@@ -123,12 +124,12 @@ var (
 	errAuthHeaderNotFormatted = errors.New("Authorization header was improperly formatted")
 )
 
-// getBearerToken is a helper function to retreive a token sent in standard "Bearer" format from a request
+// GetBearerToken is a helper function to retreive a token sent in standard "Bearer" format from a request
 // (https://tools.ietf.org/html/rfc6750#page-5). If the request doesn't contain an Authorization
 // header or the Authorization header is improperly formatted, getBearerToken returns "".
 // Handlers generally shouldn't call this function, and should instead call getSessionID or
 // getApiKey (TODO) to specify which type of token they are expecting.
-func getBearerToken(r *http.Request) (string, error) {
+func GetBearerToken(r *http.Request) (string, error) {
 	reqToken := r.Header.Get("Authorization")
 	if reqToken == "" {
 		// Request did not contain an Authorization header
@@ -144,7 +145,7 @@ func getBearerToken(r *http.Request) (string, error) {
 }
 
 func getSessionID(r *http.Request) (SessionID, error) {
-	s, err := getBearerToken(r)
+	s, err := GetBearerToken(r)
 	return SessionID(s), err
 }
 
@@ -156,7 +157,7 @@ func (sm *SessionManager) WithSessionAuth(next http.Handler) http.Handler {
 		if err != nil {
 			// Could not get sessionID, return 401
 			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
@@ -164,7 +165,7 @@ func (sm *SessionManager) WithSessionAuth(next http.Handler) http.Handler {
 		if err != nil {
 			// Session does not exist or timed out
 			log.Println(err)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 

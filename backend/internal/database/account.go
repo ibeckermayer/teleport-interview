@@ -7,13 +7,20 @@ import (
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
 )
 
-func (db *Database) insert(a *model.Account) error {
+func (db *Database) insertAccount(a *model.Account) error {
 	_, err := db.db.NamedExec("INSERT INTO account (account_id, plan, email, password_hash, created_at, updated_at) VALUES (:account_id, :plan, :email, :password_hash, :created_at, :updated_at)", a)
 	return err
 }
 
-// GetAccount retrieves an Account from the database by email address
-func (db *Database) GetAccount(email string) (model.Account, error) {
+// GetAccount retrieves an Account from the database by accountID
+func (db *Database) GetAccount(accountID string) (model.Account, error) {
+	a := model.Account{}
+	err := db.db.Get(&a, "SELECT * FROM account WHERE account_id=$1", accountID)
+	return a, err
+}
+
+// GetAccountByEmail retrieves an Account from the database by email address
+func (db *Database) GetAccountByEmail(email string) (model.Account, error) {
 	a := model.Account{}
 	err := db.db.Get(&a, "SELECT * FROM account WHERE email=$1", email)
 	return a, err
@@ -33,6 +40,6 @@ func (db *Database) CreateAccount(accountID, email, password string) error {
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
-	err = db.insert(account)
+	err = db.insertAccount(account)
 	return err
 }

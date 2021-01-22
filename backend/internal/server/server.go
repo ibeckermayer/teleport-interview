@@ -38,15 +38,18 @@ func New(cfg Config) (*Server, error) {
 	}
 	srv := &Server{cfg, mux.NewRouter(), auth.NewSessionManager(cfg.SessionTimeout), db}
 
-	loginHandler := handlers.NewLoginHandler(srv.sm, db)
+	loginHandler := WithAPIHeaders(handlers.NewLoginHandler(srv.sm, srv.db))
 	srv.router.Handle("/api/login", loginHandler).Methods("POST")
 
-	logoutHandler := handlers.NewLogoutHandler(srv.sm)
-	srv.router.Handle("/api/logout", srv.sm.WithSessionAuth(logoutHandler)).Methods("DELETE")
+	logoutHandler := WithAPIHeaders(srv.sm.WithSessionAuth(handlers.NewLogoutHandler(srv.sm)))
+	srv.router.Handle("/api/logout", logoutHandler).Methods("DELETE")
+
+	metricsPostHandler := WithAPIHeaders(srv.WithAPIkeyAuth(handlers.NewMetricsPostHandler(srv.db)))
+	srv.router.Handle("/api/metrics", metricsPostHandler).Methods("POST")
 
 	// NOTE: It's important that this handler be registered after the other handlers, or else
 	// all routes return a 404 (at least in development). TODO: figure out why this is the case.
-	spaHandler := handlers.NewSpaHandler("../frontend", "index.html")
+	spaHandler := WithHTMLHeaders(handlers.NewSpaHandler("../frontend", "index.html"))
 	srv.router.PathPrefix("/").Handler(spaHandler)
 
 	return srv, nil

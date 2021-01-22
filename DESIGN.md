@@ -70,9 +70,9 @@ Note: passwords will be salted and hashed using the [bcrypt](https://godoc.org/g
 | ------- | ---------- | --------- | ---------- | ---------- |
 | user_id | account_id | is_active | created_at | updated_at |
 
-| logins     |         |           |
-| ---------- | ------- | --------- |
-| account_id | user_id | timestamp |
+| metric    |            |         |           |
+| --------- | ---------- | ------- | --------- |
+| metric_id | account_id | user_id | timestamp |
 
 | apikey   |            |
 | -------- | ---------- |

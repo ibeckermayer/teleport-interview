@@ -9,6 +9,7 @@ import (
 	"github.com/ibeckermayer/teleport-interview/backend/internal/auth"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/database"
 	"github.com/ibeckermayer/teleport-interview/backend/internal/model"
+	"github.com/ibeckermayer/teleport-interview/backend/internal/util"
 )
 
 // LoginHandler handles calls to "/api/login". Implements http.Handler
@@ -36,30 +37,30 @@ type loginResponseBody struct {
 func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var body loginRequestBody
 
-	err := decodeJSONBody(w, r, &body)
+	err := util.DecodeJSONBody(w, r, &body)
 	if err != nil {
-		handleJSONdecodeError(w, err)
+		util.HandleJSONdecodeError(w, err)
 		return
 	}
 
-	account, err := lh.db.GetAccount(body.Email)
+	account, err := lh.db.GetAccountByEmail(body.Email)
 
 	// Handle errors from attempting to retrieve the account from the database
 	if err != nil {
 		log.Println(err)
 		if err == sql.ErrNoRows {
 			// No record with the given email address exists
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	// Account retrieved, check password
 	if !auth.CheckPasswordHash(body.Password, account.PasswordHash) {
 		// Invalid password, unauthorized
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		util.ErrorJSON(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
@@ -67,7 +68,7 @@ func (lh *LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := lh.sm.CreateSession(account)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		util.ErrorJSON(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
